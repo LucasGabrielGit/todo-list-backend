@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -13,16 +13,16 @@ model User {
   login      String
   password   String
   is_active  Boolean
-  created_at DateTime @default(now()) @db.Timestamp(3)
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(3)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
   todos      Todo[]
 }
 
 model Category {
   id          Int      @id @unique @default(autoincrement())
   description String
-  created_at  DateTime @default(now()) @db.Timestamp(3)
-  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(3)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
   todos       Todo[]
 }
 
@@ -30,8 +30,8 @@ model Todo {
   id         Int      @id @unique @default(autoincrement())
   title      String
   body       String
-  created_at DateTime @default(now()) @db.Timestamp(1)
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(1)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
   is_done    Boolean
 
   category    Category @relation(fields: [category_id], references: [id])

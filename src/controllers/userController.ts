@@ -1,11 +1,14 @@
 import { User } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { prisma } from "../client/prisma";
+import { compare, hash } from "bcrypt";
+import { sign } from "jsonwebtoken";
 
 export class UserController {
   async createUser(req: FastifyRequest, res: FastifyReply) {
     try {
       const user = req.body as User;
+      console.log(user);
 
       const userLogin = await prisma.user.findFirst({
         where: {
@@ -25,10 +28,12 @@ export class UserController {
         });
       }
 
+      const hashedPassword = await hash(user.password, 8);
+
       if (!userLogin && !userUsername) {
         await prisma.user
           .create({
-            data: user,
+            data: { ...user, password: hashedPassword },
           })
           .then(() =>
             res.status(200).send({ message: "User created successfully" })
@@ -109,15 +114,47 @@ export class UserController {
           data: userData,
           where: { id: userExists.id },
         });
-        return res
-          .status(200)
-          .send({
-            message: `User successfully updated`,
-            updatedUser: updatedUser,
-          });
+        return res.status(200).send({
+          message: `User successfully updated`,
+          updatedUser: updatedUser,
+        });
       } else {
         return res.status(501).send({ error: "User not found" });
       }
+    } catch (error) {
+      return res.status(500).send({ error: error });
+    }
+  }
+
+  async signIn(req: FastifyRequest, res: FastifyReply) {
+    try {
+      const { login, password } = req.body as {
+        login: string;
+        password: string;
+      };
+
+      const user = await prisma.user.findFirst({
+        where: {
+          login,
+        },
+      });
+
+      if (!user) {
+        return res.status(404).send({ message: "User not found" });
+      }
+
+      const isPasswordCorrect = await compare(password, user.password);
+
+      if (!isPasswordCorrect) {
+        return res.status(401).send({ message: "Invalid password" });
+      }
+
+      const token = sign({}, String(process.env.JWT_SECRET_KEY), {
+        subject: user.id.toString(),
+        expiresIn: "30m",
+      });
+
+      return res.status(200).send({ token: token, user: user });
     } catch (error) {
       return res.status(500).send({ error: error });
     }

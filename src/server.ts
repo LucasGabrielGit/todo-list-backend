@@ -15,6 +15,7 @@ app.get("/users", userController.findAllUsers);
 app.post("/user/find", userController.findUser);
 app.put("/user/update/:id", userController.updateUser);
 app.delete("/user/:id", userController.deleteUser);
+app.post("/login", userController.signIn);
 
 // Category controllers
 app.post("/category/create", categoryController.create);
@@ -26,6 +27,8 @@ app.delete("/category/delete/:id", categoryController.delete);
 // Todo controllers
 app.post("/todo/create", todoController.create);
 app.get("/todo/findAll", todoController.findAll);
+app.post("/todo/find", todoController.findByTitle);
+app.delete("/todo/delete/:id", todoController.delete);
 
 app
   .listen({

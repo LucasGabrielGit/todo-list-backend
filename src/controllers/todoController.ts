@@ -7,6 +7,10 @@ export class TodoController {
     try {
       const data = req.body as Todo;
 
+      if (data.title === "" || data.title === "") {
+        throw new Error("Title or body cannot be empty");
+      }
+
       await prisma.todo
         .create({
           data,
@@ -47,5 +51,53 @@ export class TodoController {
     } catch (error: any) {
       return res.status(500).send({ message: error.message });
     }
+  }
+
+  async findByTitle(req: FastifyRequest, res: FastifyReply) {
+    try {
+      const { title } = req.body as { title: string };
+      console.log(title);
+      const todo = await prisma.todo.findMany({
+        where: {
+          title: { contains: title },
+        },
+        include: {
+          category: {
+            select: {
+              description: true,
+            },
+          },
+          user: {
+            select: {
+              username: true,
+              login: true,
+            },
+          },
+        },
+      });
+      console.log(todo);
+
+      if (!todo || todo.length === 0) {
+        return res.status(404).send({ message: "Todo not found" });
+      }
+
+      return res.send(todo);
+    } catch (err: any) {
+      return res.status(500).send({ message: err.message });
+    }
+  }
+
+  async delete(req: FastifyRequest, res: FastifyReply) {
+    try {
+      const { id } = req.params as { id: string };
+
+      const todo = await prisma.todo.findUniqueOrThrow({
+        where: {
+          id: parseInt(id),
+        },
+      });
+
+      console.log(todo);
+    } catch (error) {}
   }
 }
